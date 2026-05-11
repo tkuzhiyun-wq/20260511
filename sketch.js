@@ -118,12 +118,12 @@ function draw() {
     // 在臉部中心貼上 4379901.png 面具
     let noseTip = face.keypoints[1];
     // 安全檢查：確保圖片已成功載入 (width > 1) 且有鼻尖點
-    if (noseTip && faceStickerImg.width > 1) {
+    if (noseTip && faceStickerImg && faceStickerImg.width > 1) {
       // 根據畫布上的縮放比例計算臉部寬度
       let faceWidthOnCanvas = dist(leftEarlobe.x * scaleX, leftEarlobe.y * scaleY, rightEarlobe.x * scaleX, rightEarlobe.y * scaleY);
       
-      // 設定面具寬度，約為臉部寬度的 2.2 倍以覆蓋全臉
-      let stickerW = faceWidthOnCanvas * 2.2;
+      // 設定面具寬度，約為臉部寬度的 2.5 倍以更完整覆蓋臉部邊緣
+      let stickerW = faceWidthOnCanvas * 2.5;
       let stickerH = stickerW * (faceStickerImg.height / faceStickerImg.width);
       
       push();
