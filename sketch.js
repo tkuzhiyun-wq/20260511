@@ -5,6 +5,7 @@ let faces = [];
 let hands = [];
 let earringImages = [];
 let currentEarringIndex = 0; // 預設顯示第 1 款
+let faceStickerImg;
 
 function preload() {
   // 載入 faceMesh 模型
@@ -18,6 +19,8 @@ function preload() {
   earringImages[2] = loadImage('pic/acc3_tassel.png');
   earringImages[3] = loadImage('pic/acc4_jade.png');
   earringImages[4] = loadImage('pic/acc5_phoenix.png');
+  // 載入臉部貼圖圖片
+  faceStickerImg = loadImage('pic/4379901.png');
 }
 
 function setup() {
@@ -103,6 +106,14 @@ function draw() {
       circle(rightEarlobe.x * scaleX, rightEarlobe.y * scaleY, 10);
       // 增加水平位移 (往右) 並且讓圖片中心稍微下移
       image(selectedEarring, rightEarlobe.x * scaleX + offsetX, rightEarlobe.y * scaleY + earringSize / 2.5, earringSize, earringSize);
+    }
+
+    // 在臉部中心貼上 4379901.png
+    let noseTip = face.keypoints[1]; // 鼻尖點通常作為臉部中心參考
+    if (noseTip) {
+      // 根據臉部兩側距離計算貼圖大小，讓它隨距離遠近縮放
+      let faceWidth = dist(leftEarlobe.x, leftEarlobe.y, rightEarlobe.x, rightEarlobe.y) * scaleX;
+      image(faceStickerImg, noseTip.x * scaleX, noseTip.y * scaleY, faceWidth * 1.5, faceWidth * 1.5 * (faceStickerImg.height / faceStickerImg.width));
     }
   }
   pop();
