@@ -94,26 +94,46 @@ function draw() {
     // 取得當前選擇的耳環圖片
     let selectedEarring = earringImages[currentEarringIndex];
 
+    // 計算臉部旋轉角度 (依據左右臉邊緣點)
+    let faceAngle = atan2(rightEarlobe.y - leftEarlobe.y, rightEarlobe.x - leftEarlobe.x);
+
     imageMode(CENTER);
+
+    // 繪製耳環
     if (leftEarlobe) {
-      fill(255, 255, 0); // 黃色圓圈
-      circle(leftEarlobe.x * scaleX, leftEarlobe.y * scaleY, 10);
-      // 增加水平位移 (往左) 並且讓圖片中心稍微下移，看起來更像垂掛
-      image(selectedEarring, leftEarlobe.x * scaleX - offsetX, leftEarlobe.y * scaleY + earringSize / 2.5, earringSize, earringSize);
+      push();
+      translate(leftEarlobe.x * scaleX - offsetX, leftEarlobe.y * scaleY + earringSize / 2.5);
+      rotate(faceAngle);
+      image(selectedEarring, 0, 0, earringSize, earringSize);
+      pop();
     }
     if (rightEarlobe) {
-      fill(255, 255, 0); // 黃色圓圈
-      circle(rightEarlobe.x * scaleX, rightEarlobe.y * scaleY, 10);
-      // 增加水平位移 (往右) 並且讓圖片中心稍微下移
-      image(selectedEarring, rightEarlobe.x * scaleX + offsetX, rightEarlobe.y * scaleY + earringSize / 2.5, earringSize, earringSize);
+      push();
+      translate(rightEarlobe.x * scaleX + offsetX, rightEarlobe.y * scaleY + earringSize / 2.5);
+      rotate(faceAngle);
+      image(selectedEarring, 0, 0, earringSize, earringSize);
+      pop();
     }
 
-    // 在臉部中心貼上 4379901.png
-    let noseTip = face.keypoints[1]; // 鼻尖點通常作為臉部中心參考
-    if (noseTip) {
-      // 根據臉部兩側距離計算貼圖大小，讓它隨距離遠近縮放
-      let faceWidth = dist(leftEarlobe.x, leftEarlobe.y, rightEarlobe.x, rightEarlobe.y) * scaleX;
-      image(faceStickerImg, noseTip.x * scaleX, noseTip.y * scaleY, faceWidth * 1.5, faceWidth * 1.5 * (faceStickerImg.height / faceStickerImg.width));
+    // 在臉部中心貼上 4379901.png 面具
+    let noseTip = face.keypoints[1];
+    // 安全檢查：確保圖片已成功載入 (width > 1) 且有鼻尖點
+    if (noseTip && faceStickerImg.width > 1) {
+      // 根據畫布上的縮放比例計算臉部寬度
+      let faceWidthOnCanvas = dist(leftEarlobe.x * scaleX, leftEarlobe.y * scaleY, rightEarlobe.x * scaleX, rightEarlobe.y * scaleY);
+      
+      // 設定面具寬度，約為臉部寬度的 2.2 倍以覆蓋全臉
+      let stickerW = faceWidthOnCanvas * 2.2;
+      let stickerH = stickerW * (faceStickerImg.height / faceStickerImg.width);
+      
+      push();
+      // 將座標原點移至鼻尖
+      translate(noseTip.x * scaleX, noseTip.y * scaleY);
+      // 隨臉部角度旋轉
+      rotate(faceAngle);
+      // 繪製面具
+      image(faceStickerImg, 0, 0, stickerW, stickerH);
+      pop();
     }
   }
   pop();
