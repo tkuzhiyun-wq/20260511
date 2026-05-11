@@ -76,13 +76,14 @@ function draw() {
   if (faces.length > 0) {
     let face = faces[0];
 
-    // 176 與 400 分別是 FaceMesh 中左右耳垂附近的索引點
-    let leftEarlobe = face.keypoints[176];
-    let rightEarlobe = face.keypoints[400];
+    // 改用 234 (左臉邊緣) 與 454 (右臉邊緣)，這兩點更靠近耳朵
+    let leftEarlobe = face.keypoints[234];
+    let rightEarlobe = face.keypoints[454];
 
     // 將座標對應到畫布上的影像大小 (50% 寬高)
     let scaleX = videoW / capture.width;
     let scaleY = videoH / capture.height;
+    let offsetX = videoW * 0.01; // 稍微往臉部外側偏移一點點 (1%)
 
     // 設定耳環大小 (約為顯示影像寬度的 10%)
     let earringSize = videoW * 0.1;
@@ -94,12 +95,14 @@ function draw() {
     if (leftEarlobe) {
       fill(255, 255, 0); // 黃色圓圈
       circle(leftEarlobe.x * scaleX, leftEarlobe.y * scaleY, 10);
-      image(selectedEarring, leftEarlobe.x * scaleX, leftEarlobe.y * scaleY + earringSize / 3, earringSize, earringSize);
+      // 增加水平位移 (往左) 並且讓圖片中心稍微下移，看起來更像垂掛
+      image(selectedEarring, leftEarlobe.x * scaleX - offsetX, leftEarlobe.y * scaleY + earringSize / 2.5, earringSize, earringSize);
     }
     if (rightEarlobe) {
       fill(255, 255, 0); // 黃色圓圈
       circle(rightEarlobe.x * scaleX, rightEarlobe.y * scaleY, 10);
-      image(selectedEarring, rightEarlobe.x * scaleX, rightEarlobe.y * scaleY + earringSize / 3, earringSize, earringSize);
+      // 增加水平位移 (往右) 並且讓圖片中心稍微下移
+      image(selectedEarring, rightEarlobe.x * scaleX + offsetX, rightEarlobe.y * scaleY + earringSize / 2.5, earringSize, earringSize);
     }
   }
   pop();
