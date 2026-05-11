@@ -1,0 +1,135 @@
+let capture;
+let faceMesh;
+let handPose;
+let faces = [];
+let hands = [];
+let earringImages = [];
+let currentEarringIndex = 0; // 預設顯示第 1 款
+
+function preload() {
+  // 載入 faceMesh 模型
+  faceMesh = ml5.faceMesh();
+  // 載入 handPose 模型
+  handPose = ml5.handPose();
+
+  // 載入 5 款指定名稱的耳環圖片
+  earringImages[0] = loadImage('pic/acc1_ring.png');
+  earringImages[1] = loadImage('pic/acc2_pearl.png');
+  earringImages[2] = loadImage('pic/acc3_tassel.png');
+  earringImages[3] = loadImage('pic/acc4_jade.png');
+  earringImages[4] = loadImage('pic/acc5_phoenix.png');
+}
+
+function setup() {
+  // 建立全螢幕畫布
+  createCanvas(windowWidth, windowHeight);
+  
+  // 擷取攝影機影像
+  capture = createCapture(VIDEO);
+  capture.size(640, 480); // 設定基準解析度以利辨識
+  
+  // 隱藏預設產生的 HTML 影片元件
+  capture.hide();
+
+  // 開始對攝影機影像進行臉部偵測
+  faceMesh.detectStart(capture, gotFaces);
+  // 開始對攝影機影像進行手勢偵測
+  handPose.detectStart(capture, gotHands);
+}
+
+function gotFaces(results) {
+  // 儲存偵測到的臉部資料
+  faces = results;
+}
+
+function gotHands(results) {
+  // 儲存偵測到的手部資料
+  hands = results;
+}
+
+function draw() {
+  // 設定背景顏色為 e7c6ff (粉紫色)
+  background('#e7c6ff');
+
+  let videoW = windowWidth * 0.5;
+  let videoH = windowHeight * 0.5;
+  let x = (windowWidth - videoW) / 2;
+  let y = (windowHeight - videoH) / 2;
+
+  // 處理左右顛倒（鏡像效果）
+  push();
+  translate(x + videoW, y);
+  scale(-1, 1);
+  
+  // 繪製攝影機影像
+  image(capture, 0, 0, videoW, videoH);
+
+  // 如果偵測到手勢，計算手指數量並切換耳環索引
+  if (hands.length > 0) {
+    let fingerCount = countFingers(hands[0]);
+    if (fingerCount >= 1 && fingerCount <= 5) {
+      currentEarringIndex = fingerCount - 1;
+    }
+  }
+
+  // 如果偵測到臉部，則繪製耳垂位置
+  if (faces.length > 0) {
+    let face = faces[0];
+
+    // 176 與 400 分別是 FaceMesh 中左右耳垂附近的索引點
+    let leftEarlobe = face.keypoints[176];
+    let rightEarlobe = face.keypoints[400];
+
+    // 將座標對應到畫布上的影像大小 (50% 寬高)
+    let scaleX = videoW / capture.width;
+    let scaleY = videoH / capture.height;
+
+    // 設定耳環大小 (約為顯示影像寬度的 10%)
+    let earringSize = videoW * 0.1;
+
+    // 取得當前選擇的耳環圖片
+    let selectedEarring = earringImages[currentEarringIndex];
+
+    imageMode(CENTER);
+    if (leftEarlobe) {
+      fill(255, 255, 0); // 黃色圓圈
+      circle(leftEarlobe.x * scaleX, leftEarlobe.y * scaleY, 10);
+      image(selectedEarring, leftEarlobe.x * scaleX, leftEarlobe.y * scaleY + earringSize / 3, earringSize, earringSize);
+    }
+    if (rightEarlobe) {
+      fill(255, 255, 0); // 黃色圓圈
+      circle(rightEarlobe.x * scaleX, rightEarlobe.y * scaleY, 10);
+      image(selectedEarring, rightEarlobe.x * scaleX, rightEarlobe.y * scaleY + earringSize / 3, earringSize, earringSize);
+    }
+  }
+  pop();
+}
+
+// 計算伸出的手指數量
+function countFingers(hand) {
+  let count = 0;
+  // 4 根手指：食指(8, 6), 中指(12, 10), 無名指(16, 14), 小指(20, 18)
+  // 判斷方式：指尖(Tip) Y 座標小於第二關節(PIP) Y 座標 (在 p5 中 Y 越小代表越高)
+  const tips = [8, 12, 16, 20];
+  const pips = [6, 10, 14, 18];
+
+  for (let i = 0; i < 4; i++) {
+    if (hand.keypoints[tips[i]].y < hand.keypoints[pips[i]].y) {
+      count++;
+    }
+  }
+
+  // 大拇指(4, 2)：利用指尖到手腕(0)的距離來判斷是否張開
+  let thumbTip = hand.keypoints[4];
+  let thumbBase = hand.keypoints[2];
+  let wrist = hand.keypoints[0];
+  if (dist(thumbTip.x, thumbTip.y, wrist.x, wrist.y) > dist(thumbBase.x, thumbBase.y, wrist.x, wrist.y)) {
+    count++;
+  }
+
+  return count;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
